@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# pico-sdk
+build
+src
+CMakeLists.txt
+*.cmake
