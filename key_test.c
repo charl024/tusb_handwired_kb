@@ -8,15 +8,15 @@
 
 #include "class/hid/hid.h"
 
-#define NUM_ROWS 12
-#define NUM_COLS 4
+#define HEIGHT 4
+#define WIDTH 12
 
-// TOTAL PINS: NUM_ROWS + NUM_COLS = 4 + 10 = 14
-const uint8_t COLS[4] = {9, 10, 11, 12};
-const uint8_t ROWS[12] = {13, 14, 15, 16, 17, 18, 
+// TOTAL PINS: HEIGHT + WIDTH = 4 + 12 = 14
+const uint8_t ROWS[HEIGHT] = {9, 10, 11, 12};
+const uint8_t COLS[WIDTH] = {13, 14, 15, 16, 17, 18, 
                           19, 20, 21, 22, 23, 24};
 
-const uint8_t keys_l1[NUM_ROWS*NUM_COLS] = 
+const uint8_t keys_l1[HEIGHT*WIDTH] = 
 {
     HID_KEY_ESCAPE,       HID_KEY_Q,    HID_KEY_W,        HID_KEY_E,    HID_KEY_R,    HID_KEY_T,                       HID_KEY_Y,      HID_KEY_U,                      HID_KEY_I,                   HID_KEY_O,                   HID_KEY_P,             HID_KEY_BACKSPACE,
     HID_KEY_TAB,          HID_KEY_A,    HID_KEY_S,        HID_KEY_D,    HID_KEY_F,    HID_KEY_G,                       HID_KEY_H,      HID_KEY_J,                      HID_KEY_K,                   HID_KEY_L,                   HID_KEY_SEMICOLON,     HID_KEY_ENTER,
@@ -38,29 +38,27 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 void pin_setup() {
     // set rows as INPUT, no PULL-UP initially
-    for (size_t row = 0; row < NUM_ROWS; ++row) {
+    for (size_t row = 0; row < HEIGHT; ++row) {
         uint8_t curr_row = ROWS[row];
         gpio_init(curr_row);
         gpio_set_dir(curr_row, GPIO_IN);
+        gpio_pull_up(curr_row);
     }
 
     // set cols as INPUT, with PULL-UP initially
-    for (size_t col = 0; col < NUM_COLS; ++col) {
+    for (size_t col = 0; col < WIDTH; ++col) {
         uint8_t curr_col = COLS[col];
         gpio_init(curr_col);
         gpio_set_dir(curr_col, GPIO_IN);
-        gpio_pull_up(curr_col);
     }
 }
 
 int key_pin_reset() {
-    for (size_t col = 0; col < NUM_COLS; ++col) {
-        uint8_t curr_col = COLS[col];
-        for (size_t row = 0; row < NUM_ROWS; ++row) {
-            uint8_t curr_row = ROWS[row];
-            gpio_set_dir(curr_row, GPIO_IN);
+    for (size_t y = 0; y < HEIGHT y++) {
+        for (uint8_t x = 0; x < WIDTH; x++) {
+            gpio_set_dir(curr_col, GPIO_IN);
         }
-        gpio_set_dir(curr_col, GPIO_IN);
+        gpio_set_dir(curr_row, GPIO_IN);
     }
     return 0;
 }
@@ -74,25 +72,18 @@ int key_scan() {
     uint8_t pressed = 0;
     uint8_t mult_key_idx = 0;
 
-    // for each col...
-    for (size_t col = 0; col < NUM_COLS; ++col) {
-        // set current col from INPUT (with pull-up) to OUTPUT, drive low
-        uint8_t curr_col = COLS[col];
-        gpio_set_dir(curr_col, GPIO_OUT);
-        gpio_put(curr_col, 0);
+    for (size_t y = 0; y < HEIGHT y++) {
+        uint8_t curr_row = ROWS[y];
+        gpio_set_dir(curr_row, GPIO_OUT);
+        gpio_put(curr_row, 0);
 
-        // for each row pin in curr col...
-        for (size_t row = 0; row < NUM_ROWS; ++row) {
-            // set current row s INPUT, with PULL-UP
-            uint8_t curr_row = ROWS[row];
-            gpio_set_dir(curr_row, GPIO_IN);
-            gpio_pull_up(curr_row);
-
-            // Check if key is pressed
-            uint8_t curr_state = gpio_get(curr_row);
+        for (uint8_t x = 0; x < WIDTH; x++) {
+            uint8_t curr_col = COLS[x];
+            gpio_set_dir(curr_col, GPIO_IN);
+            uint8_t curr_state = gpio_get(curr_col);
 
             if (!curr_state) {
-                uint8_t idx = row * NUM_COLS + col;
+                uint8_t idx = y * WIDTH + x;
                 keycodes[mult_key_idx] = keys_l1[idx];
                 mult_key_idx++;
                 pressed = 1;
@@ -102,14 +93,47 @@ int key_scan() {
                 }
             }
 
-            // reset row pin
-            // gpio_disable_pulls(curr_row);
-            gpio_set_dir(curr_row, GPIO_IN);
+            gpio_set_dir(curr_col, GPIO_IN);
         }
-        // reset col pin
-        gpio_set_dir(curr_col, GPIO_IN);
-        // gpio_pull_up(curr_col);
+        gpio_set_dir(curr_row, GPIO_IN);
     }
+
+    // // for each col...
+    // for (size_t col = 0; col < WIDTH; ++col) {
+    //     // set current col from INPUT (with pull-up) to OUTPUT, drive low
+    //     uint8_t curr_col = COLS[col];
+    //     gpio_set_dir(curr_col, GPIO_OUT);
+    //     gpio_put(curr_col, 1);
+
+    //     // for each row pin in curr col...
+    //     for (size_t row = 0; row < HEIGHT; ++row) {
+    //         // set current row s INPUT, with PULL-UP
+    //         uint8_t curr_row = ROWS[row];
+    //         gpio_set_dir(curr_row, GPIO_IN);
+    //         // gpio_pull_up(curr_row);
+
+    //         // Check if key is pressed
+    //         uint8_t curr_state = gpio_get(curr_row);
+
+    //         if (!curr_state) {
+    //             uint8_t idx = row * WIDTH + col;
+    //             keycodes[mult_key_idx] = keys_l1[idx];
+    //             mult_key_idx++;
+    //             pressed = 1;
+    //             if (mult_key_idx >= 6) {
+    //                 key_pin_reset();
+    //                 return pressed;
+    //             }
+    //         }
+
+    //         // reset row pin
+    //         // gpio_disable_pulls(curr_row);
+    //         gpio_set_dir(curr_row, GPIO_IN);
+    //     }
+    //     // reset col pin
+    //     gpio_set_dir(curr_col, GPIO_IN);
+    //     // gpio_pull_up(curr_col);
+    // }
 
     return pressed;
 }
@@ -128,9 +152,10 @@ static void send_hid_report(uint32_t btn) {
 
     if (btn) {
         tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycodes);
-        blink_led();
+        // blink_led();
 
         activated = 1;
+        sleep_ms(10);
 
     } else {
         if (activated) tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
