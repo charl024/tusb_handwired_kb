@@ -13,8 +13,9 @@
 
 // TOTAL PINS: HEIGHT + WIDTH = 4 + 12 = 16
 const uint8_t ROWS[HEIGHT] = {9, 10, 11, 12};
-const uint8_t COLS[WIDTH] = {13, 14, 15, 16, 17, 18, 
-                          19, 20, 21, 22, 23, 24};
+// const uint8_t COLS[WIDTH] = {13, 14, 15, 16, 17, 18, 
+//                           19, 20, 21, 22, 23, 24};
+const uint8_t COLS[WIDTH] = {24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13};
 
 const uint8_t keys_l1[HEIGHT][WIDTH] = 
 {
@@ -25,7 +26,7 @@ const uint8_t keys_l1[HEIGHT][WIDTH] =
 };
 
 uint8_t keycodes[6] = {0};
-
+                            
 enum
 {
     BLINK_NOT_MOUNTED = 250,
